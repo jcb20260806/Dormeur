@@ -143,12 +143,15 @@ class MainActivity : AppCompatActivity() {
         )
 
         // Créer les tirets
-        val tirets = "X".repeat(mot.value.length)
+        // Conserver la première lettre
+        val premiereLettre = mot.value.first()
 
-        // Remplacer le mot par les tirets
+// Remplacer le reste du mot par des tirets
+        val tirets = "-".repeat(mot.value.length - 1)
+
         texte = texte.replaceRange(
             mot.range,
-            tirets
+            premiereLettre + tirets
         )
 
         // Afficher le texte
