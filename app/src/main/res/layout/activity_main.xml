@@ -8,6 +8,7 @@
     android:padding="16dp">
 
 
+
     <!-- Les trois boutons côte à côte -->
     <TextView
 
@@ -15,6 +16,8 @@
         android:layout_width="match_parent"
         android:layout_height="610dp"
         android:layout_weight="1"
+        android:background="#00008B"
+
         android:padding="16dp"
         android:scrollbars="vertical"
         android:textColor="@android:color/white"
