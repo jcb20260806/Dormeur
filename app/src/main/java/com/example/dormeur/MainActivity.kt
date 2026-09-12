@@ -10,6 +10,7 @@ import android.graphics.Color
 import android.text.SpannableString
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
+import android.content.Intent
 
 class MainActivity : AppCompatActivity() {
 
@@ -18,6 +19,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnAfficher: Button
     private lateinit var btnReset: Button
     private var dernierMotAffiche: MotMasque? = null
+    private lateinit var btnOptions: Button
 
     // Texte actuellement affiché
     private var texte = ""
@@ -41,6 +43,13 @@ class MainActivity : AppCompatActivity() {
         btnMasquer = findViewById(R.id.btnMasquer)
         btnAfficher = findViewById(R.id.btnAfficher)
         btnReset = findViewById(R.id.btnReset)
+        btnOptions = findViewById(R.id.btnOptions)
+
+        btnOptions.setOnClickListener {
+            startActivity(
+                Intent(this, OptionsActivity::class.java)
+            )
+        }
 
         // Lecture du fichier Dormeur.txt
         texte = assets.open("Dormeur.txt")
@@ -63,6 +72,7 @@ class MainActivity : AppCompatActivity() {
         btnReset.setOnClickListener {
             resetTexte()
         }
+
     }
 
     // ---------------------------------------------------------
