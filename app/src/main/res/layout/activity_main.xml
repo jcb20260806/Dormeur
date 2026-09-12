@@ -6,7 +6,12 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp">
-
+    <Button
+        android:id="@+id/btnOptions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Options"
+        android:textSize="20sp" />
 
     <!-- Les trois boutons côte à côte -->
     <TextView
@@ -48,12 +53,7 @@
             android:layout_weight="1"
             android:text="Reset"
             android:textSize="16sp" />
-        <Button
-            android:id="@+id/btnOptions"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Options"
-            android:textSize="20sp" />
+
 
     </LinearLayout>
 
