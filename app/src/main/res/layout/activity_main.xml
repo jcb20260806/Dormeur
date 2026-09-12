@@ -5,6 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:background="#00008B"
     android:padding="16dp">
     <Button
         android:id="@+id/btnOptions"
@@ -23,7 +24,7 @@
         android:padding="16dp"
         android:scrollbars="vertical"
         android:textColor="@android:color/white"
-        android:textSize="10sp" />
+        android:textSize="16dp" />
 
     <LinearLayout
         android:layout_width="match_parent"
