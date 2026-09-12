@@ -45,11 +45,7 @@ class MainActivity : AppCompatActivity() {
         btnReset = findViewById(R.id.btnReset)
         btnOptions = findViewById(R.id.btnOptions)
 
-        btnOptions.setOnClickListener {
-            startActivity(
-                Intent(this, OptionsActivity::class.java)
-            )
-        }
+
 
         // Lecture du fichier Dormeur.txt
         texte = assets.open("Dormeur.txt")
@@ -71,6 +67,11 @@ class MainActivity : AppCompatActivity() {
         }
         btnReset.setOnClickListener {
             resetTexte()
+        }
+        btnOptions.setOnClickListener {
+            startActivity(
+                Intent(this, OptionsActivity::class.java)
+            )
         }
 
     }
