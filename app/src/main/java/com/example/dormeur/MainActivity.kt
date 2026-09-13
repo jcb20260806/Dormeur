@@ -1,4 +1,3 @@
-
 package com.example.dormeur
 
 import android.os.Bundle
@@ -11,20 +10,25 @@ import android.text.SpannableString
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
 import android.content.Intent
+import org.json.JSONArray
+import org.json.JSONObject
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var txtDormeur: TextView
     private lateinit var btnMasquer: Button
     private lateinit var btnAfficher: Button
+    private lateinit var btnRemasquer: Button
     private lateinit var btnReset: Button
-    private var dernierMotAffiche: MotMasque? = null
     private lateinit var btnOptions: Button
 
     // Texte actuellement affiché
     private var texte = ""
 
+    // ---------------------------------------------------------
     // Élément de la pile
+    // ---------------------------------------------------------
+
     data class MotMasque(
         val debut: Int,
         val fin: Int,
@@ -32,7 +36,19 @@ class MainActivity : AppCompatActivity() {
     )
 
     // La pile des mots masqués
+    // Last In First Out
     private val pile = ArrayDeque<MotMasque>()
+
+    // Dernier mot qui vient d'être réaffiché
+    private var dernierMotAffiche: MotMasque? = null
+
+    // ---------------------------------------------------------
+    // Sauvegarde
+    // ---------------------------------------------------------
+
+    private val preferences by lazy {
+        getSharedPreferences("Dormeur", MODE_PRIVATE)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,43 +58,63 @@ class MainActivity : AppCompatActivity() {
         txtDormeur = findViewById(R.id.txtDormeur)
         btnMasquer = findViewById(R.id.btnMasquer)
         btnAfficher = findViewById(R.id.btnAfficher)
+        btnRemasquer = findViewById(R.id.btnRemasquer)
         btnReset = findViewById(R.id.btnReset)
         btnOptions = findViewById(R.id.btnOptions)
 
+        // -----------------------------------------------------
+        // Restaurer automatiquement l'état précédent
+        // -----------------------------------------------------
 
+        restaurerEtat()
 
-        // Lecture du fichier Dormeur.txt
-        texte = assets.open("Dormeur.txt")
-            .bufferedReader()
-            .use { it.readText() }
-
-        // Affichage initial
-        afficherTexte()
-
+        // -----------------------------------------------------
         // Bouton MASQUER
+        // -----------------------------------------------------
+
         btnMasquer.setOnClickListener {
             masquerMotAleatoire()
         }
 
+        // -----------------------------------------------------
         // Bouton AFFICHER
+        // -----------------------------------------------------
+
         btnAfficher.setOnClickListener {
             afficherDernierMot()
-
         }
+
+        // -----------------------------------------------------
+        // Bouton REMASQUER
+        // -----------------------------------------------------
+
+        btnRemasquer.setOnClickListener {
+            remasquerDernierMot()
+        }
+
+        // -----------------------------------------------------
+        // Bouton RESET
+        // -----------------------------------------------------
+
         btnReset.setOnClickListener {
             resetTexte()
         }
+
+        // -----------------------------------------------------
+        // Bouton OPTIONS
+        // -----------------------------------------------------
+
         btnOptions.setOnClickListener {
             startActivity(
                 Intent(this, OptionsActivity::class.java)
             )
         }
-
     }
 
-    // ---------------------------------------------------------
-    // Masque un mot choisi au hasard
-    // ---------------------------------------------------------
+    // =========================================================
+    // AFFICHAGE DU TEXTE
+    // =========================================================
+
     private fun afficherTexte() {
 
         val spannable = SpannableString(texte)
@@ -87,7 +123,6 @@ class MainActivity : AppCompatActivity() {
 
         for (i in texte.indices) {
 
-            // Fin de ligne
             if (texte[i] == '\n') {
 
                 colorerPremiereLettre(
@@ -100,27 +135,49 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Traiter également la dernière ligne
+        // Dernière ligne
         colorerPremiereLettre(
             spannable,
             debutLigne,
             texte.length
         )
 
+        // -----------------------------------------------------
+        // Colorer les tirets en rose
+        // -----------------------------------------------------
+
+        for (i in texte.indices) {
+
+            if (texte[i] == '-') {
+
+                spannable.setSpan(
+                    ForegroundColorSpan(
+                        Color.rgb(255, 105, 180)
+                    ),
+                    i,
+                    i + 1,
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+            }
+        }
+
         txtDormeur.text = spannable
     }
+
+    // =========================================================
+    // PREMIÈRE LETTRE DE CHAQUE LIGNE EN ROUGE
+    // =========================================================
+
     private fun colorerPremiereLettre(
         spannable: SpannableString,
         debut: Int,
         fin: Int
     ) {
 
-        // Chercher le premier caractère non blanc
         for (i in debut until fin) {
 
             if (!texte[i].isWhitespace()) {
 
-                // Colorer ce caractère en rouge
                 spannable.setSpan(
                     ForegroundColorSpan(Color.RED),
                     i,
@@ -132,6 +189,11 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+    // =========================================================
+    // MASQUER UN MOT
+    // =========================================================
+
     private fun masquerMotAleatoire() {
 
         val regex = Regex("\\b[\\p{L}\\p{N}]+\\b")
@@ -145,55 +207,105 @@ class MainActivity : AppCompatActivity() {
         val mot = mots[Random.nextInt(mots.size)]
 
         // Sauvegarder le mot dans la pile
-        pile.addLast(
-            MotMasque(
-                debut = mot.range.first,
-                fin = mot.range.last + 1,
-                mot = mot.value
-            )
+        val motMasque = MotMasque(
+            debut = mot.range.first,
+            fin = mot.range.last + 1,
+            mot = mot.value
         )
 
-        // Créer les tirets
+        pile.addLast(motMasque)
+
+        // -----------------------------------------------------
         // Conserver la première lettre
+        // -----------------------------------------------------
+
         val premiereLettre = mot.value.first()
 
-// Remplacer le reste du mot par des tirets
-        val tirets = "-".repeat(mot.value.length - 1)
+        val tirets = "-".repeat(
+            mot.value.length - 1
+        )
 
         texte = texte.replaceRange(
             mot.range,
             premiereLettre + tirets
         )
 
-        // Afficher le texte
+        // Un nouveau masquage annule le dernier
+        // mot réaffiché
+        dernierMotAffiche = null
+
         afficherTexte()
+
+        // Sauvegarde automatique
+        sauverEtat()
     }
 
-    // ---------------------------------------------------------
-    // Réaffiche le dernier mot masqué
-    // ---------------------------------------------------------
+    // =========================================================
+    // RÉAFFICHER LE DERNIER MOT MASQUÉ
+    // =========================================================
 
     private fun afficherDernierMot() {
 
-        // Vérifier si la pile est vide
         if (pile.isEmpty()) {
             return
         }
 
         // LIFO :
-        // on récupère le dernier mot ajouté
+        // dernier mot ajouté = premier mot réaffiché
         val dernier = pile.removeLast()
 
-        // Remplacer les tirets par le mot original
         texte = texte.replaceRange(
             dernier.debut,
             dernier.fin,
             dernier.mot
         )
 
-        // Afficher le texte
+        // Mémoriser le dernier mot réaffiché
+        dernierMotAffiche = dernier
+
         afficherTexte()
+
+        // Sauvegarde automatique
+        sauverEtat()
     }
+
+    // =========================================================
+    // REMASQUER LE MOT QUI VIENT D'ÊTRE RÉAFFICHÉ
+    // =========================================================
+
+    private fun remasquerDernierMot() {
+
+        val dernier = dernierMotAffiche ?: return
+
+        // Conserver la première lettre
+        val premiereLettre = dernier.mot.first()
+
+        val tirets = "-".repeat(
+            dernier.mot.length - 1
+        )
+
+        texte = texte.replaceRange(
+            dernier.debut,
+            dernier.fin,
+            premiereLettre + tirets
+        )
+
+        // Remettre le mot dans la pile
+        pile.addLast(dernier)
+
+        // Il n'y a plus de mot récemment réaffiché
+        dernierMotAffiche = null
+
+        afficherTexte()
+
+        // Sauvegarde automatique
+        sauverEtat()
+    }
+
+    // =========================================================
+    // RESET
+    // =========================================================
+
     private fun resetTexte() {
 
         // Relire le fichier original
@@ -204,8 +316,182 @@ class MainActivity : AppCompatActivity() {
         // Vider la pile
         pile.clear()
 
-        // Réafficher le texte original
+        // Oublier le dernier mot réaffiché
+        dernierMotAffiche = null
+
+        afficherTexte()
+
+        // Sauvegarder l'état initial
+        sauverEtat()
+    }
+
+    // =========================================================
+    // SAUVEGARDER L'ÉTAT
+    // =========================================================
+
+    private fun sauverEtat() {
+
+        // -----------------------------------------------------
+        // Sauvegarder le texte
+        // -----------------------------------------------------
+
+        val editor = preferences.edit()
+
+        editor.putString(
+            "texte",
+            texte
+        )
+
+        // -----------------------------------------------------
+        // Sauvegarder la pile
+        // -----------------------------------------------------
+
+        val tableauPile = JSONArray()
+
+        for (mot in pile) {
+
+            val objet = JSONObject()
+
+            objet.put("debut", mot.debut)
+            objet.put("fin", mot.fin)
+            objet.put("mot", mot.mot)
+
+            tableauPile.put(objet)
+        }
+
+        editor.putString(
+            "pile",
+            tableauPile.toString()
+        )
+
+        // -----------------------------------------------------
+        // Sauvegarder le dernier mot réaffiché
+        // -----------------------------------------------------
+
+        if (dernierMotAffiche != null) {
+
+            val objet = JSONObject()
+
+            objet.put(
+                "debut",
+                dernierMotAffiche!!.debut
+            )
+
+            objet.put(
+                "fin",
+                dernierMotAffiche!!.fin
+            )
+
+            objet.put(
+                "mot",
+                dernierMotAffiche!!.mot
+            )
+
+            editor.putString(
+                "dernierMotAffiche",
+                objet.toString()
+            )
+
+        } else {
+
+            editor.remove("dernierMotAffiche")
+        }
+
+        editor.apply()
+    }
+
+    // =========================================================
+    // RESTAURER L'ÉTAT
+    // =========================================================
+
+    private fun restaurerEtat() {
+
+        val texteSauve = preferences.getString(
+            "texte",
+            null
+        )
+
+        // -----------------------------------------------------
+        // S'il n'y a aucune sauvegarde :
+        // charger Dormeur.txt
+        // -----------------------------------------------------
+
+        if (texteSauve == null) {
+
+            texte = assets.open("Dormeur.txt")
+                .bufferedReader()
+                .use { it.readText() }
+
+            pile.clear()
+            dernierMotAffiche = null
+
+            afficherTexte()
+
+            return
+        }
+
+        // -----------------------------------------------------
+        // Restaurer le texte
+        // -----------------------------------------------------
+
+        texte = texteSauve
+
+        // -----------------------------------------------------
+        // Restaurer la pile
+        // -----------------------------------------------------
+
+        pile.clear()
+
+        val chainePile = preferences.getString(
+            "pile",
+            null
+        )
+
+        if (chainePile != null) {
+
+            val tableauPile = JSONArray(
+                chainePile
+            )
+
+            for (i in 0 until tableauPile.length()) {
+
+                val objet = tableauPile.getJSONObject(i)
+
+                pile.addLast(
+                    MotMasque(
+                        debut = objet.getInt("debut"),
+                        fin = objet.getInt("fin"),
+                        mot = objet.getString("mot")
+                    )
+                )
+            }
+        }
+
+        // -----------------------------------------------------
+        // Restaurer le dernier mot réaffiché
+        // -----------------------------------------------------
+
+        dernierMotAffiche = null
+
+        val chaineDernier = preferences.getString(
+            "dernierMotAffiche",
+            null
+        )
+
+        if (chaineDernier != null) {
+
+            val objet = JSONObject(
+                chaineDernier
+            )
+
+            dernierMotAffiche = MotMasque(
+                debut = objet.getInt("debut"),
+                fin = objet.getInt("fin"),
+                mot = objet.getString("mot")
+            )
+        }
+
+        // Afficher le texte restauré
         afficherTexte()
     }
 }
-
