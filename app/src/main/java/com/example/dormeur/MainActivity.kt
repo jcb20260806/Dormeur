@@ -196,7 +196,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun masquerMotAleatoire() {
 
-        val regex = Regex("\\b[\\p{L}\\p{N}]+\\b")
+        val regex = Regex("\\b[\\p{L}]{2,}\\b")
         val mots = regex.findAll(texte).toList()
 
         if (mots.isEmpty()) {
@@ -204,7 +204,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Choisir un mot au hasard
-        val mot = mots[Random.nextInt(mots.size)]
+        //val mot = mots[Random.nextInt(mots.size)]
+        val mot = mots[10]
 
         // Sauvegarder le mot dans la pile
         val motMasque = MotMasque(
@@ -238,6 +239,8 @@ class MainActivity : AppCompatActivity() {
 
         // Sauvegarde automatique
         sauverEtat()
+        val jcb = ""
+
     }
 
     // =========================================================
