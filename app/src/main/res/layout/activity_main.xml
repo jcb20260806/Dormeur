@@ -32,11 +32,18 @@
         android:orientation="horizontal">
 
         <Button
-            android:id="@+id/btnMasquer"
+            android:id="@+id/btnMasquerRandom"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Masquer"
+            android:text="MasquerRandom"
+            android:textSize="16sp" />
+        <Button
+            android:id="@+id/btnMasquerFirst"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="MasquerFirst"
             android:textSize="16sp" />
 
         <Button

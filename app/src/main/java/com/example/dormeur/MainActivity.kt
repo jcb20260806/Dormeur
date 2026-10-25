@@ -16,7 +16,8 @@ import org.json.JSONObject
 class MainActivity : AppCompatActivity() {
 
     private lateinit var txtDormeur: TextView
-    private lateinit var btnMasquer: Button
+    private lateinit var btnMasquerRandom: Button
+    private lateinit var btnMasquerFirst: Button
     private lateinit var btnAfficher: Button
     private lateinit var btnRemasquer: Button
     private lateinit var btnReset: Button
@@ -56,7 +57,9 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         txtDormeur = findViewById(R.id.txtDormeur)
-        btnMasquer = findViewById(R.id.btnMasquer)
+        btnMasquerRandom = findViewById(R.id.btnMasquerRandom)
+
+        btnMasquerFirst = findViewById(R.id.btnMasquerFirst)
         btnAfficher = findViewById(R.id.btnAfficher)
         btnRemasquer = findViewById(R.id.btnRemasquer)
         btnReset = findViewById(R.id.btnReset)
@@ -72,8 +75,11 @@ class MainActivity : AppCompatActivity() {
         // Bouton MASQUER
         // -----------------------------------------------------
 
-        btnMasquer.setOnClickListener {
-            masquerMotAleatoire()
+        btnMasquerRandom.setOnClickListener {
+            masquerMotAleatoire("Random")
+        }
+        btnMasquerFirst.setOnClickListener {
+            masquerMotAleatoire("First")
         }
 
         // -----------------------------------------------------
@@ -194,7 +200,7 @@ class MainActivity : AppCompatActivity() {
     // MASQUER UN MOT
     // =========================================================
 
-    private fun masquerMotAleatoire() {
+    private fun masquerMotAleatoire(Mode: String = "Random") {
 
         val regex = Regex("\\b[\\p{L}]{2,}\\b")
         val mots = regex.findAll(texte).toList()
@@ -202,10 +208,13 @@ class MainActivity : AppCompatActivity() {
         if (mots.isEmpty()) {
             return
         }
+        val mot = if (Mode == "Random") {
+            // Choisir un mot au hasard
+            mots[Random.nextInt(mots.size)]
 
-        // Choisir un mot au hasard
-        //val mot = mots[Random.nextInt(mots.size)]
-        val mot = mots[10]
+        } else {
+            mots.first()
+        }
 
         // Sauvegarder le mot dans la pile
         val motMasque = MotMasque(
@@ -239,8 +248,6 @@ class MainActivity : AppCompatActivity() {
 
         // Sauvegarde automatique
         sauverEtat()
-        val jcb = ""
-
     }
 
     // =========================================================
