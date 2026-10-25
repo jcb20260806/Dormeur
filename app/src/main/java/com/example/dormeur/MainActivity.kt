@@ -319,7 +319,7 @@ class MainActivity : AppCompatActivity() {
     private fun resetTexte() {
 
         // Relire le fichier original
-        texte = assets.open("Dormeur.txt")
+        texte = assets.open("DemainDesLAube.txtgit ")
             .bufferedReader()
             .use { it.readText() }
 
